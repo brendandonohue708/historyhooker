@@ -21,6 +21,10 @@ export default function Root({ children }: PropsWithChildren) {
 }
 
 const bodyStyles = `
-html, body { background-color: #0D0D0D; color: #F5F1E8; }
-#root { background-color: #0D0D0D; }
+html, body, #root { background-color: #0D0D0D !important; color: #F5F1E8; min-height: 100%; }
+body { margin: 0; }
+* { box-sizing: border-box; }
+/* Override the default light card background that react-native-screens injects on web */
+div[style*="rgba(242,242,242"] { background-color: #0D0D0D !important; }
+div[style*="rgb(242, 242, 242)"] { background-color: #0D0D0D !important; }
 `;
