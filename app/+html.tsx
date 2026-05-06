@@ -27,4 +27,12 @@ body { margin: 0; }
 /* Override the default light card background that react-native-screens injects on web */
 div[style*="rgba(242,242,242"] { background-color: #0D0D0D !important; }
 div[style*="rgb(242, 242, 242)"] { background-color: #0D0D0D !important; }
+/* iOS Safari only reliably fires click events on elements with cursor:pointer */
+[role="button"], [role="link"], [data-focusable="true"] {
+  cursor: pointer !important;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  user-select: none;
+  -webkit-user-select: none;
+}
 `;

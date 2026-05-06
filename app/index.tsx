@@ -74,11 +74,11 @@ export default function FeedScreen() {
     [profile.topicsCompleted],
   );
 
-  const onSurprise = useCallback(() => {
+  const surpriseHref = useMemo(() => {
     const unseen = topics.filter((t) => !completedSet.has(t.id));
     const pool = unseen.length > 0 ? unseen : topics;
-    const pick = pool[Math.floor(Math.random() * pool.length)];
-    router.push({ pathname: '/play', params: { topicId: pick.id } });
+    const pick = pool[Math.floor(Math.random() * pool.length)] ?? topics[0];
+    return { pathname: '/play' as const, params: { topicId: pick?.id ?? '' } };
   }, [topics, completedSet]);
 
   const onRefresh = useCallback(async () => {
@@ -121,14 +121,20 @@ export default function FeedScreen() {
 
       <StreakBanner streak={profile.correctStreak} dailyRemaining={dailyRemaining} />
 
-      <Pressable
-        onPress={onSurprise}
-        style={({ pressed }) => [styles.surprise, pressed && { opacity: 0.7 }]}
-      >
-        <Text style={styles.surpriseLabel}>Surprise me</Text>
-        <Text style={styles.surpriseSub}>pick something I haven't seen</Text>
-        <Text style={styles.surpriseArrow}>→</Text>
-      </Pressable>
+      <Link href={surpriseHref} asChild>
+        <Pressable
+          style={({ pressed }) => [
+            styles.surprise,
+            // @ts-ignore web-only
+            { cursor: 'pointer' as any },
+            pressed && { opacity: 0.7 },
+          ]}
+        >
+          <Text style={styles.surpriseLabel}>Surprise me</Text>
+          <Text style={styles.surpriseSub}>pick something I haven't seen</Text>
+          <Text style={styles.surpriseArrow}>→</Text>
+        </Pressable>
+      </Link>
 
       <View style={styles.filterRow}>
         <ScrollView
@@ -171,9 +177,7 @@ export default function FeedScreen() {
             key={t.id}
             topic={t}
             completed={completedSet.has(t.id)}
-            onPress={() =>
-              router.push({ pathname: '/play', params: { topicId: t.id } })
-            }
+            href={{ pathname: '/play', params: { topicId: t.id } }}
           />
         ))}
         {filtered.length === 0 && (
