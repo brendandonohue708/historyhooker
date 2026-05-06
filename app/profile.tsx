@@ -6,17 +6,8 @@ import { useAppStore, seedSets, seedSwag } from '@/state/store';
 import { Avatar } from '@/components/Avatar';
 import { CoinPill } from '@/components/CoinPill';
 import { CategoryBarChart } from '@/components/CategoryBarChart';
-import { useHasMounted } from '@/lib/useHasMounted';
 
 export default function ProfileScreen() {
-  const mounted = useHasMounted();
-  if (!mounted) {
-    return <View style={{ flex: 1, backgroundColor: palette.bg }} />;
-  }
-  return <ProfileScreenInner />;
-}
-
-function ProfileScreenInner() {
   const profile = useAppStore((s) => s.profile);
   const topics = useAppStore((s) => s.topics);
 

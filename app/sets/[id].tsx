@@ -3,17 +3,8 @@ import { View, Text, StyleSheet, ScrollView, Pressable, Image } from 'react-nati
 import { router, useLocalSearchParams } from 'expo-router';
 import { palette, type, space, radius, accentFor } from '@/theme';
 import { useAppStore, seedSets, seedSwag } from '@/state/store';
-import { useHasMounted } from '@/lib/useHasMounted';
 
 export default function SetDetailScreen() {
-  const mounted = useHasMounted();
-  if (!mounted) {
-    return <View style={{ flex: 1, backgroundColor: palette.bg }} />;
-  }
-  return <SetDetailScreenInner />;
-}
-
-function SetDetailScreenInner() {
   const { id } = useLocalSearchParams<{ id?: string }>();
   const set = useMemo(() => seedSets.find((s) => s.id === id), [id]);
   const topics = useAppStore((s) => s.topics);

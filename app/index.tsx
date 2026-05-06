@@ -20,19 +20,10 @@ import { CoinPill } from '@/components/CoinPill';
 import { CategoryChip } from '@/components/CategoryChip';
 import { TopicPreviewCard } from '@/components/TopicPreviewCard';
 import type { CategoryId } from '@/data/types';
-import { useHasMounted } from '@/lib/useHasMounted';
 
 const CATEGORIES = Object.keys(categoryAccents) as CategoryId[];
 
 export default function FeedScreen() {
-  const mounted = useHasMounted();
-  if (!mounted) {
-    return <View style={{ flex: 1, backgroundColor: palette.bg }} />;
-  }
-  return <FeedScreenInner />;
-}
-
-function FeedScreenInner() {
   const topics = useAppStore((s) => s.topics);
   const profile = useAppStore((s) => s.profile);
   const dailyRemaining = useDailyRemaining();
@@ -83,12 +74,23 @@ function FeedScreenInner() {
     [profile.topicsCompleted],
   );
 
+  // Surprise href is deterministic on first render (first unseen topic),
+  // then re-randomizes whenever the user lands back on the Feed via the
+  // surpriseSeed below. This keeps SSR and first client paint identical
+  // so React 19 hydration succeeds.
+  const [surpriseSeed, setSurpriseSeed] = useState(0);
+  useEffect(() => {
+    setSurpriseSeed(Math.random());
+  }, []);
   const surpriseHref = useMemo(() => {
     const unseen = topics.filter((t) => !completedSet.has(t.id));
     const pool = unseen.length > 0 ? unseen : topics;
-    const pick = pool[Math.floor(Math.random() * pool.length)] ?? topics[0];
+    const idx = surpriseSeed
+      ? Math.floor(surpriseSeed * pool.length)
+      : 0;
+    const pick = pool[idx] ?? pool[0];
     return { pathname: '/play' as const, params: { topicId: pick?.id ?? '' } };
-  }, [topics, completedSet]);
+  }, [topics, completedSet, surpriseSeed]);
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);

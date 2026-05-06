@@ -4,19 +4,10 @@ import { router } from 'expo-router';
 import { palette, type, space, radius } from '@/theme';
 import { useAppStore, seedLeaderboard, seedSwag } from '@/state/store';
 import type { LeaderboardEntry } from '@/data/types';
-import { useHasMounted } from '@/lib/useHasMounted';
 
 type Tab = 'weekly' | 'all';
 
 export default function LeaderboardScreen() {
-  const mounted = useHasMounted();
-  if (!mounted) {
-    return <View style={{ flex: 1, backgroundColor: palette.bg }} />;
-  }
-  return <LeaderboardScreenInner />;
-}
-
-function LeaderboardScreenInner() {
   const profile = useAppStore((s) => s.profile);
   const [tab, setTab] = useState<Tab>('weekly');
 

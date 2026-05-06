@@ -108,11 +108,15 @@ function ImageReveal({ uri }: { uri: string }) {
 
 function AudioCard({ transcript, accent }: { transcript: string; accent: string }) {
   // Decorative waveform bars (animated heights). No actual audio playback in seed.
+  // Animations deferred to useEffect so SSR + client first paint render the
+  // same deterministic 0-height bars and hydration succeeds.
   const bars = Array.from({ length: 28 }, (_, i) => i);
-  const anims = useRef(bars.map(() => new Animated.Value(Math.random()))).current;
+  const [anims, setAnims] = useState<Animated.Value[]>([]);
 
   useEffect(() => {
-    const animations = anims.map((v, i) =>
+    const created = bars.map(() => new Animated.Value(Math.random()));
+    setAnims(created);
+    const animations = created.map((v, i) =>
       Animated.loop(
         Animated.sequence([
           Animated.timing(v, {
@@ -130,7 +134,8 @@ function AudioCard({ transcript, accent }: { transcript: string; accent: string 
     );
     animations.forEach((a) => a.start());
     return () => animations.forEach((a) => a.stop());
-  }, [anims]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   return (
     <View style={styles.audioWrap}>

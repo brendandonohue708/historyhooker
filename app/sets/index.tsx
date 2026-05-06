@@ -2,17 +2,8 @@ import { View, Text, StyleSheet, ScrollView, Pressable, Image } from 'react-nati
 import { router } from 'expo-router';
 import { palette, type, space, radius } from '@/theme';
 import { useAppStore, seedSets, seedSwag } from '@/state/store';
-import { useHasMounted } from '@/lib/useHasMounted';
 
 export default function SetsScreen() {
-  const mounted = useHasMounted();
-  if (!mounted) {
-    return <View style={{ flex: 1, backgroundColor: palette.bg }} />;
-  }
-  return <SetsScreenInner />;
-}
-
-function SetsScreenInner() {
   const profile = useAppStore((s) => s.profile);
 
   return (
