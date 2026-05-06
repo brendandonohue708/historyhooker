@@ -17,6 +17,7 @@ import { QuestionCard } from '@/components/QuestionCard';
 import { ExpansionSheet } from '@/components/ExpansionSheet';
 import { ConfettiBurst } from '@/components/ConfettiBurst';
 import { CoinPill } from '@/components/CoinPill';
+import { useHasMounted } from '@/lib/useHasMounted';
 
 type Stage = 'clue' | 'question' | 'expansion' | 'topicComplete';
 
@@ -29,6 +30,17 @@ const haptic = (kind: 'light' | 'success' | 'error') => {
 };
 
 export default function PlayScreen() {
+  const mounted = useHasMounted();
+  if (!mounted) {
+    // Empty shell during SSR and the synchronous first client paint.
+    // Both produce the same DOM, so React's hydration succeeds and
+    // useEffects start firing in PlayScreenInner below.
+    return <View style={{ flex: 1, backgroundColor: palette.bg }} />;
+  }
+  return <PlayScreenInner />;
+}
+
+function PlayScreenInner() {
   const { topicId } = useLocalSearchParams<{ topicId?: string }>();
   const topics = useAppStore((s) => s.topics);
   const profile = useAppStore((s) => s.profile);

@@ -20,10 +20,19 @@ import { CoinPill } from '@/components/CoinPill';
 import { CategoryChip } from '@/components/CategoryChip';
 import { TopicPreviewCard } from '@/components/TopicPreviewCard';
 import type { CategoryId } from '@/data/types';
+import { useHasMounted } from '@/lib/useHasMounted';
 
 const CATEGORIES = Object.keys(categoryAccents) as CategoryId[];
 
 export default function FeedScreen() {
+  const mounted = useHasMounted();
+  if (!mounted) {
+    return <View style={{ flex: 1, backgroundColor: palette.bg }} />;
+  }
+  return <FeedScreenInner />;
+}
+
+function FeedScreenInner() {
   const topics = useAppStore((s) => s.topics);
   const profile = useAppStore((s) => s.profile);
   const dailyRemaining = useDailyRemaining();

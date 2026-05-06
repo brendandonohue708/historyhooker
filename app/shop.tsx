@@ -11,15 +11,19 @@ import { palette, type, space, radius, rarityColors } from '@/theme';
 import { useAppStore, seedSwag } from '@/state/store';
 import { CoinPill } from '@/components/CoinPill';
 import type { SwagItem } from '@/data/types';
+import { useHasMounted } from '@/lib/useHasMounted';
 
 const TABS: SwagItem['type'][] = ['badge', 'frame', 'title'];
-const TAB_LABELS: Record<SwagItem['type'], string> = {
-  badge: 'Badges',
-  frame: 'Frames',
-  titles: 'Titles',
-} as any;
 
 export default function ShopScreen() {
+  const mounted = useHasMounted();
+  if (!mounted) {
+    return <View style={{ flex: 1, backgroundColor: palette.bg }} />;
+  }
+  return <ShopScreenInner />;
+}
+
+function ShopScreenInner() {
   const profile = useAppStore((s) => s.profile);
   const purchaseSwag = useAppStore((s) => s.purchaseSwag);
   const equipSwag = useAppStore((s) => s.equipSwag);
