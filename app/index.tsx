@@ -1,4 +1,4 @@
-import { useMemo, useState, useCallback } from 'react';
+import { useMemo, useState, useCallback, useEffect } from 'react';
 import {
   View,
   Text,
@@ -6,6 +6,8 @@ import {
   ScrollView,
   Pressable,
   RefreshControl,
+  AppState,
+  Platform,
 } from 'react-native';
 import { Link, router } from 'expo-router';
 import { palette, type, space, radius, categoryAccents } from '@/theme';
@@ -26,8 +28,38 @@ export default function FeedScreen() {
   const profile = useAppStore((s) => s.profile);
   const dailyRemaining = useDailyRemaining();
   const newTopicsBannerCount = useAppStore((s) => s.newTopicsBannerCount);
+  const onboardingComplete = useAppStore((s) => s.onboardingComplete);
+  const hasHydrated = useAppStore((s) => s.hasHydrated);
+  const registerTopicView = useAppStore((s) => s.registerTopicView);
   const [filter, setFilter] = useState<CategoryId | null>(null);
   const [refreshing, setRefreshing] = useState(false);
+
+  // First-launch gate: route to onboarding once state has rehydrated.
+  useEffect(() => {
+    if (!hasHydrated) return;
+    if (!onboardingComplete) router.replace('/onboarding');
+  }, [hasHydrated, onboardingComplete]);
+
+  // Day rollover when the app comes back to the foreground.
+  useEffect(() => {
+    if (Platform.OS === 'web') {
+      // On web there is no AppState, but visibility change is the closest analogue.
+      const onVisible = () => {
+        if (typeof document !== 'undefined' && document.visibilityState === 'visible') {
+          registerTopicView('feed-foreground');
+        }
+      };
+      if (typeof document !== 'undefined') {
+        document.addEventListener('visibilitychange', onVisible);
+        return () => document.removeEventListener('visibilitychange', onVisible);
+      }
+      return;
+    }
+    const sub = AppState.addEventListener('change', (s) => {
+      if (s === 'active') registerTopicView('feed-foreground');
+    });
+    return () => sub.remove();
+  }, [registerTopicView]);
 
   const filtered = useMemo(
     () =>
@@ -124,6 +156,15 @@ export default function FeedScreen() {
         </ScrollView>
       </View>
 
+      {profile.topicsCompleted.length === topics.length && topics.length > 0 && (
+        <View style={styles.allDone}>
+          <Text style={styles.allDoneTitle}>You've seen everything.</Text>
+          <Text style={styles.allDoneBody}>
+            New topics arrive every few days. Check back, or revisit one.
+          </Text>
+        </View>
+      )}
+
       <View style={styles.list}>
         {filtered.map((t) => (
           <TopicPreviewCard
@@ -214,6 +255,16 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   emptyText: { ...type.body, color: palette.textMuted },
+  allDone: {
+    marginHorizontal: space.lg,
+    padding: space.xl,
+    backgroundColor: palette.bgCard,
+    borderRadius: radius.lg,
+    borderWidth: 1,
+    borderColor: palette.coin,
+  },
+  allDoneTitle: { ...type.title, color: palette.coin, fontSize: 22, lineHeight: 28 },
+  allDoneBody: { ...type.body, color: palette.textMuted, marginTop: space.sm },
   footerNav: {
     flexDirection: 'row',
     justifyContent: 'space-around',
