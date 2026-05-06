@@ -1,6 +1,9 @@
 #!/usr/bin/env bash
 # Build the web bundle and publish it to the gh-pages branch.
 # Run from repo root: bash scripts/deploy-pages.sh
+#
+# gh-pages is a generated artifact branch; we rewrite its tip every deploy
+# (force push). Source history lives on the working branch.
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
@@ -14,26 +17,28 @@ echo "==> Adding SPA fallback + .nojekyll"
 cp dist/index.html dist/404.html
 touch dist/.nojekyll
 
-echo "==> Publishing to gh-pages branch"
+echo "==> Publishing to gh-pages branch (orphan, force-pushed)"
 WORKTREE="$(mktemp -d)"
-git worktree add -B gh-pages "$WORKTREE" || git worktree add "$WORKTREE" gh-pages
 
-# Wipe worktree contents (keeping .git linkage)
-find "$WORKTREE" -mindepth 1 -maxdepth 1 ! -name '.git' -exec rm -rf {} +
-
-# Copy dist contents (including dotfiles)
-cp -R dist/. "$WORKTREE/"
+# Always create gh-pages as a fresh orphan in the worktree.
+# We force-push so source-branch history never pollutes gh-pages.
+git worktree remove --force "$WORKTREE" 2>/dev/null || true
+git worktree add --detach "$WORKTREE"
 
 cd "$WORKTREE"
+TMP_BRANCH="gh-pages-tmp-$$"
+git checkout --orphan "$TMP_BRANCH"
+git rm -rf . >/dev/null 2>&1 || true
+find . -mindepth 1 -maxdepth 1 ! -name '.git' -exec rm -rf {} +
+
+cp -R "$ROOT/dist/." .
 git add -A
-if git diff --cached --quiet; then
-  echo "==> No changes to publish"
-else
-  git -c commit.gpgsign=false commit -m "Deploy web build $(date -u +%Y-%m-%dT%H:%M:%SZ)"
-  git push -u origin gh-pages
-fi
+git -c commit.gpgsign=false commit -m "Deploy web build $(date -u +%Y-%m-%dT%H:%M:%SZ)"
+
+# Force-push the orphan as gh-pages (replaces remote tip)
+git push --force origin HEAD:gh-pages
 
 cd "$ROOT"
 git worktree remove --force "$WORKTREE"
 
-echo "==> Done"
+echo "==> Done. URL: https://brendandonohue708.github.io/historyhooker/"
